@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<title>Card Game</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #0b5136;
+    color: white;
+    text-align: center;
+}
+
+button {
+    padding: 8px 14px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.card {
+    display: inline-block;
+    border: 1px solid #fff;
+    border-radius: 6px;
+    padding: 10px;
+    margin: 5px;
+    background: white;
+    color: black;
+    cursor: pointer;
+}
+
+.card:hover {
+    background: #ffeaa7;
+}
+
+#table, #hand {
+    margin: 15px;
+}
+
+.card.red {
+    color: #d40000;
+}
+
+.card.black {
+    color: #000;
+}
+
+.card .suit {
+  font-size: 22px;
+}
+
+.card {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🃏 Card Game</h1>
+
+<div>
+    User ID:
+    <input type="number" id="userId" value="1">
+</div>
+
+<div>
+    Game ID:
+    <input type="number" id="gameId">
+</div>
+
+<button onclick="createGame()">Create Game</button>
+<button onclick="joinGame()">Join Game</button>
+
+<hr>
+
+<h2>Status: <span id="status">-</span></h2>
+
+<h3>🃂 Table</h3>
+<div id="table"></div>
+
+<h3>🃁 Your Hand</h3>
+<div id="hand"></div>
+
+<h3>🏆 Score: <span id="score">0</span></h3>
+
+<script>
+let currentPlayer = null;
+let pollInterval = null;
+let currentGameId = null;
+let currentUserId = null;
+
+function api(url, data) {
+    return fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    }).then(r => r.json());
+}
+
+function createGame() {
+    currentUserId = +userId.value;
+
+    api('api/game_init.php', { user_id: currentUserId })
+        .then(res => {
+            if (res.game_id) {
+                currentGameId = res.game_id;
+                gameId.value = res.game_id;
+
+                status.innerText = 'Waiting for second player...';
+                startPolling(); // ✅ ΠΑΝΤΑ
+            }
+        });
+}
+
+
+
+function joinGame() {
+    currentUserId = +userId.value;
+    currentGameId = +gameId.value;
+
+    api('api/game_join.php', {
+        user_id: currentUserId,
+        game_id: currentGameId
+    }).then(res => {
+        if (res.success) {
+            startPolling(); // ✅
+        }
+    });
+}
+
+
+
+
+/* ⚠️ απλό polling (demo) */
+function loadState() {
+    fetch(`api/game_state.php?game_id=${currentGameId}&user_id=${currentUserId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+
+            if (data.status === 'waiting') {
+                status.innerText = 'Waiting for second player...';
+                return;
+            }
+
+            updateUI(data);
+        });
+}
+
+
+
+function playCard(card) {
+    const userId = +document.getElementById('userId').value;
+    const gameId = +document.getElementById('gameId').value;
+
+    api('api/game_move.php', {
+        game_id: gameId,
+        user_id: userId,
+        card: card
+    }).then(res => {
+        if (res.error) {
+            alert(res.error);
+        } else if (res.game_over) {
+            alert("🏁 Game Over!");
+        } else {
+            updateUI(res);
+        }
+    });
+}
+
+function updateUI(data) {
+    renderCards('table', data.table, false);
+    renderCards('hand', data.hand, data.your_turn);
+
+    score.innerText = data.your_score;
+    status.innerText = data.your_turn
+        ? '🟢 Your turn'
+        : '⏳ Opponent turn';
+}
+
+
+
+function renderCards(containerId, cards, clickable) {
+    const div = document.getElementById(containerId);
+    div.innerHTML = '';
+
+    cards.forEach(c => {
+        const el = document.createElement('div');
+
+        // έλεγχος χρώματος
+        const colorClass = (c.suit === '♥' || c.suit === '♦') ? 'red' : 'black';
+
+        el.className = `card ${colorClass}`;
+        el.innerText = c.value + c.suit;
+
+        if (clickable) {
+            el.onclick = () => playCard(c);
+            el.style.cursor = 'pointer';
+        }
+
+        div.appendChild(el);
+    });
+}
+
+
+function startPolling() {
+    if (pollInterval) return;
+
+    pollInterval = setInterval(loadState, 1000);
+}
+
+function suitColor(suit) {
+  return (suit === "♥" || suit === "♦") ? "red" : "black";
+}
+
+</script>
+
+</body>
+</html>

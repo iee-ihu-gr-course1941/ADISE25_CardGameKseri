@@ -21,7 +21,7 @@ $userId = (int)$_GET['user_id'];
 
 try {
 
-    /* 1️⃣ Φόρτωση παιχνιδιού */
+    /* Φόρτωση παιχνιδιού */
     $stmt = $db->prepare("SELECT * FROM games WHERE id = ?");
     $stmt->execute([$gameId]);
     $game = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -30,7 +30,7 @@ try {
         throw new Exception("Game not found");
     }
 
-    /* 2️⃣ Παίκτης */
+    /* Παίκτης */
     $stmt = $db->prepare("
         SELECT hand, score 
         FROM game_players
@@ -43,7 +43,7 @@ try {
         throw new Exception("Player not in this game");
     }
 
-    /* 3️⃣ Αντίπαλος (score μόνο) */
+    /* Αντίπαλος (score μόνο) */
     $stmt = $db->prepare("
         SELECT user_id, score
         FROM game_players
@@ -71,3 +71,4 @@ try {
 } catch (Exception $e) {
     echo json_encode(["error" => $e->getMessage()]);
 }
+

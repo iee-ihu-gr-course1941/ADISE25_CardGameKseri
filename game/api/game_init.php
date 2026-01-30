@@ -25,14 +25,14 @@ $userId = (int)$data['user_id'];
 try {
     $db->beginTransaction();
 
-    /* 1️⃣ Δημιουργία τράπουλας */
+    /* Δημιουργία τράπουλας */
     $deck = createDeck();
     shuffleDeck($deck);
 
-    /* 2️⃣ 4 φύλλα στο τραπέζι */
+    /* 4 φύλλα στο τραπέζι */
     $tableCards = array_splice($deck, 0, 4);
 
-    /* 3️⃣ Δημιουργία παιχνιδιού */
+    /* Δημιουργία παιχνιδιού */
     $stmt = $db->prepare("
         INSERT INTO games (status, current_player, deck, table_cards)
         VALUES ('waiting', NULL, ?, ?)
@@ -44,7 +44,7 @@ try {
 
     $gameId = $db->lastInsertId();
 
-    /* 4️⃣ Εισαγωγή πρώτου παίκτη */
+    /* Εισαγωγή πρώτου παίκτη */
     $stmt = $db->prepare("
         INSERT INTO game_players (game_id, user_id, hand, score)
         VALUES (?, ?, '[]', 0)
@@ -63,3 +63,4 @@ try {
     $db->rollBack();
     echo json_encode(["error" => $e->getMessage()]);
 }
+

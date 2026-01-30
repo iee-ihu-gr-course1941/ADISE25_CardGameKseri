@@ -109,7 +109,7 @@ function createGame() {
                 gameId.value = res.game_id;
 
                 status.innerText = 'Waiting for second player...';
-                startPolling(); // ✅ ΠΑΝΤΑ
+                startPolling(); 
             }
         });
 }
@@ -125,7 +125,7 @@ function joinGame() {
         game_id: currentGameId
     }).then(res => {
         if (res.success) {
-            startPolling(); // ✅
+            startPolling(); 
         }
     });
 }
@@ -219,3 +219,4 @@ function suitColor(suit) {
 
 </body>
 </html>
+

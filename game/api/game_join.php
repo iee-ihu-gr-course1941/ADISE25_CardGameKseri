@@ -27,7 +27,7 @@ $userId = (int)$data['user_id'];
 try {
     $db->beginTransaction();
 
-    /* 1️⃣ Φόρτωση παιχνιδιού */
+    /* Φόρτωση παιχνιδιού */
     $stmt = $db->prepare("SELECT * FROM games WHERE id = ?");
     $stmt->execute([$gameId]);
     $game = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -40,7 +40,7 @@ try {
         throw new Exception("Game already started");
     }
 
-    /* 2️⃣ Έλεγχος αν υπάρχει ήδη παίκτης */
+    /* Έλεγχος αν υπάρχει ήδη παίκτης */
     $stmt = $db->prepare("
         SELECT COUNT(*) FROM game_players WHERE game_id = ?
     ");
@@ -51,14 +51,14 @@ try {
         throw new Exception("Invalid game state");
     }
 
-    /* 3️⃣ Προσθήκη δεύτερου παίκτη */
+    /* Προσθήκη δεύτερου παίκτη */
     $stmt = $db->prepare("
         INSERT INTO game_players (game_id, user_id, hand, score)
         VALUES (?, ?, '[]', 0)
     ");
     $stmt->execute([$gameId, $userId]);
 
-    /* 4️⃣ Μοίρασμα φύλλων */
+    /* Μοίρασμα φύλλων */
     $deck = json_decode($game['deck'], true);
 
     $stmt = $db->prepare("
@@ -75,7 +75,7 @@ try {
         $stmt->execute([json_encode($hand), $pid]);
     }
 
-    /* 5️⃣ Ορισμός πρώτου παίκτη (απλά ο πρώτος που μπήκε) */
+    /* Ορισμός πρώτου παίκτη (απλά ο πρώτος που μπήκε) */
     $stmt = $db->prepare("
         SELECT user_id FROM game_players
         WHERE game_id = ?
@@ -85,7 +85,7 @@ try {
     $stmt->execute([$gameId]);
     $firstPlayer = $stmt->fetchColumn();
 
-    /* 6️⃣ Update game */
+    /* Update game */
     $stmt = $db->prepare("
         UPDATE games
         SET status = 'active',
@@ -111,3 +111,4 @@ try {
     $db->rollBack();
     echo json_encode(["error" => $e->getMessage()]);
 }
+

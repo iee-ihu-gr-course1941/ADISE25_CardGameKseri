@@ -29,7 +29,7 @@ $playedCard = $data['card'];
 try {
     $db->beginTransaction();
 
-    /* 1️⃣ Φόρτωση παιχνιδιού */
+    /* Φόρτωση παιχνιδιού */
     $stmt = $db->prepare("SELECT * FROM games WHERE id = ?");
     $stmt->execute([$gameId]);
     $game = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -45,7 +45,7 @@ try {
     $tableCards = json_decode($game['table_cards'], true);
     $deck = json_decode($game['deck'], true);
 
-    /* 2️⃣ Παίκτης */
+    /* Παίκτης */
     $stmt = $db->prepare("
         SELECT * FROM game_players 
         WHERE game_id = ? AND user_id = ?
@@ -60,7 +60,7 @@ try {
     $hand = json_decode($player['hand'], true);
     $score = (int)$player['score'];
 
-    /* 3️⃣ Έλεγχος ότι το φύλλο υπάρχει στο χέρι */
+    /* Έλεγχος ότι το φύλλο υπάρχει στο χέρι */
     $cardIndex = -1;
     foreach ($hand as $i => $c) {
         if ($c['suit'] === $playedCard['suit'] && $c['value'] === $playedCard['value']) {
@@ -76,7 +76,7 @@ try {
     /* Αφαίρεση φύλλου από χέρι */
     array_splice($hand, $cardIndex, 1);
 
-    /* 4️⃣ Κανόνες πιασίματος */
+    /* Κανόνες πιασίματος */
     if (isCapture($playedCard, $tableCards)) {
 
         $captured = $tableCards;
@@ -100,7 +100,7 @@ try {
         $tableCards[] = $playedCard;
     }
 
-    /* 5️⃣ Ενημέρωση παίκτη */
+    /* Ενημέρωση παίκτη */
     $stmt = $db->prepare("
         UPDATE game_players 
         SET hand = ?, score = ?
@@ -112,7 +112,7 @@ try {
         $player['id']
     ]);
 
-    /* 6️⃣ Εύρεση επόμενου παίκτη */
+    /* Εύρεση επόμενου παίκτη */
     $stmt = $db->prepare("
         SELECT user_id FROM game_players
         WHERE game_id = ? AND user_id != ?
@@ -120,7 +120,7 @@ try {
     $stmt->execute([$gameId, $userId]);
     $nextPlayer = $stmt->fetchColumn();
 
-    /* 7️⃣ Μοίρασμα αν χρειάζεται */
+    /* Μοίρασμα αν χρειάζεται */
     if (empty($hand)) {
 
         $stmt = $db->prepare("
@@ -145,7 +145,7 @@ try {
         }
     }
 
-    /* 8️⃣ Τέλος παιχνιδιού */
+    /* Τέλος παιχνιδιού */
     if (count($deck) === 0) {
         $stmt = $db->prepare("
             SELECT COUNT(*) FROM game_players
@@ -183,7 +183,7 @@ try {
         }
     }
 
-    /* 9️⃣ Update game */
+    /* Update game */
     $stmt = $db->prepare("
         UPDATE games 
         SET table_cards = ?, deck = ?, current_player = ?
@@ -208,4 +208,5 @@ try {
 } catch (Exception $e) {
     $db->rollBack();
     echo json_encode(["error" => $e->getMessage()]);
+
 }
